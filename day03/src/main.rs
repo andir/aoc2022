@@ -1,8 +1,12 @@
+use itertools::Itertools;
+
 fn main() {
     let input = include_str!("input.txt");
     println!("part1: {}", part1(input));
+    println!("part2: {}", part2(input));
 }
 
+#[derive(Debug, Clone)]
 struct Rucksack<'a> {
     comp1: &'a str,
     comp2: &'a str,
@@ -47,10 +51,34 @@ impl<'a> Rucksack<'a> {
             .map(|c| item_score(c))
             .sum()
     }
+
+    fn unique_items(&self) -> std::collections::HashSet<char> {
+        self.comp1.chars().chain(self.comp2.chars()).collect()
+    }
 }
 
 fn part1<'a>(input: &'a str) -> u64 {
     input.lines().map(Rucksack::parse).map(|r| r.score()).sum()
+}
+
+fn part2<'a>(input: &'a str) -> u64 {
+    let it = input.lines().map(Rucksack::parse);
+
+    let mut sum: u64 = 0;
+    for rs in &it.chunks(3) {
+        let common = rs
+            .map(|rucksack| rucksack.unique_items())
+            .reduce(|acc, r| acc.intersection(&r).cloned().collect());
+
+	let common = common.expect("There must be something");
+
+	assert_eq!(common.len(), 1);
+
+	let s : u64 = common.iter().map(|i| item_score(*i)).sum();
+	sum += s;
+    }
+
+    sum
 }
 
 #[cfg(test)]
@@ -73,5 +101,6 @@ wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
 ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw"#;
         assert_eq!(super::part1(input), 157);
+        assert_eq!(super::part2(input), 70);
     }
 }
